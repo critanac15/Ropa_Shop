@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NØMAD — Ropa urbana</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            arena: '#e8e0d4',
+            crema: '#f5f0e8',
+            carbon: '#1a1a1a',
+            humo: '#6b6560',
+            terracota: '#c4653a',
+            oliva: '#5c6b4f',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'Georgia', 'serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .cart-drawer { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .cart-drawer.open { transform: translateX(0); }
+    .modal-backdrop { display: none; }
+    .modal-backdrop.open { display: flex; }
+    .toast-anim { animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s; }
+    @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+</head>
+<body class="bg-crema text-carbon font-body antialiased selection:bg-terracota selection:text-white">
+
+  <!-- ═══════════════ NAVBAR ═══════════════ -->
+  <nav id="navbar" class="fixed top-0 left-0 w-full z-40 transition-all duration-500 bg-transparent">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="flex items-center justify-between h-16 lg:h-20">
+        <!-- Logo -->
+        <a href="#" class="text-2xl lg:text-3xl font-display font-bold tracking-wider nav-text">NØMAD</a>
+
+        <!-- Desktop links -->
+        <ul class="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide uppercase nav-text">
+          <li><a href="#nuevos" class="hover:text-terracota transition-colors duration-300">Nuevos</a></li>
+          <li><a href="#coleccion" class="hover:text-terracota transition-colors duration-300">Colección</a></li>
+          <li><a href="#nosotros" class="hover:text-terracota transition-colors duration-300">Nosotros</a></li>
+          <li><a href="#comunidad" class="hover:text-terracota transition-colors duration-300">Reseñas</a></li>
+        </ul>
+
+        <!-- Icons & Admin Shortcut -->
+        <div class="flex items-center gap-4 sm:gap-5 nav-text">
+          <!-- Enlace al CRUD Admin -->
+          <a href="admin.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-current text-xs font-semibold tracking-wider uppercase hover:bg-terracota hover:border-terracota hover:text-white transition-all duration-300 shadow-sm" title="Ir al panel de gestión de bases de datos">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="hidden sm:inline">Panel Admin</span>
+          </a>
+
+          <!-- Botón Carrito -->
+          <button id="open-cart-btn" class="hover:text-terracota transition-colors relative p-1" aria-label="Carrito de compras">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span id="cart-badge" class="absolute -top-1 -right-1.5 bg-terracota text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center transition-transform">0</span>
+          </button>
+
+          <!-- Mobile menu button -->
+          <button id="menu-btn" class="md:hidden hover:text-terracota transition-colors p-1" aria-label="Menú">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden overflow-hidden max-h-0 transition-all duration-500 bg-crema/95 backdrop-blur-md border-b border-carbon/10">
+      <ul class="flex flex-col items-center gap-5 py-6 text-sm font-medium tracking-wide uppercase">
+        <li><a href="#nuevos" class="hover:text-terracota transition-colors">Nuevos</a></li>
+        <li><a href="#coleccion" class="hover:text-terracota transition-colors">Colección</a></li>
+        <li><a href="#nosotros" class="hover:text-terracota transition-colors">Nosotros</a></li>
+        <li><a href="#comunidad" class="hover:text-terracota transition-colors">Reseñas</a></li>
+        <li><a href="admin.html" class="text-terracota font-bold flex items-center gap-1.5 pt-2">⚙ Ir al Panel Admin CRUD</a></li>
+      </ul>
+    </div>
+  </nav>
+
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <header class="relative min-h-screen flex items-center overflow-hidden">
+    <div class="absolute inset-0">
+      <img
+        src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80"
+        alt="Modelo con ropa urbana"
+        class="w-full h-full object-cover"
+      >
+      <div class="absolute inset-0 bg-gradient-to-r from-carbon/75 via-carbon/45 to-transparent"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
+      <div class="max-w-xl">
+        <p class="text-arena/80 text-sm tracking-[0.3em] uppercase mb-4 font-medium">Otoño / Invierno 2026</p>
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white leading-[1.05] mb-6">
+          Ropa que<br>
+          <span class="italic text-arena">cuenta historias</span>
+        </h1>
+        <p class="text-arena/70 text-base lg:text-lg leading-relaxed mb-10 max-w-md">
+          Piezas pensadas para quienes se mueven sin prisa pero sin pausa. Sistema políglota activo: MongoDB & SQL Server.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#coleccion" class="bg-white text-carbon px-8 py-3.5 text-sm font-semibold tracking-wider uppercase hover:bg-terracota hover:text-white transition-all duration-300">
+            Ver colección
+          </a>
+          <a href="admin.html" class="border border-white/50 text-white px-8 py-3.5 text-sm font-semibold tracking-wider uppercase hover:border-white hover:bg-white/10 transition-all duration-300 flex items-center gap-2">
+            Gestionar CRUD →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50">
+      <span class="text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+      <div class="w-px h-10 bg-white/30 scroll-line"></div>
+    </div>
+  </header>
+
+
+  <!-- ═══════════════ MARQUEE ═══════════════ -->
+  <div class="bg-carbon py-3 overflow-hidden">
+    <div class="marquee-track flex whitespace-nowrap gap-12 text-arena/60 text-xs tracking-[0.4em] uppercase font-medium">
+      <span>Envío gratis +\$80.000</span>
+      <span>·</span>
+      <span>Catálogo en MongoDB</span>
+      <span>·</span>
+      <span>Pedidos en SQL Server</span>
+      <span>·</span>
+      <span>Materiales sustentables</span>
+      <span>·</span>
+      <span>Envío gratis +\$80.000</span>
+      <span>·</span>
+      <span>Arquitectura Políglota</span>
+      <span>·</span>
+      <span>Devoluciones fáciles</span>
+      <span>·</span>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ CATEGORÍAS ═══════════════ -->
+  <section class="py-20 lg:py-28 px-6 lg:px-10 max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-14">
+      <div>
+        <p class="text-humo text-xs tracking-[0.3em] uppercase mb-2">Explora</p>
+        <h2 class="text-3xl lg:text-4xl font-display font-semibold">Categorías</h2>
+      </div>
+      <a href="#coleccion" class="text-sm text-humo hover:text-terracota transition-colors underline underline-offset-4">Ver catálogo completo →</a>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6" id="categorias-grid">
+      <!-- Cat 1 -->
+      <a href="#coleccion" onclick="setCategoryFilter('Camisetas')" class="group relative aspect-[3/4] overflow-hidden rounded-sm cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&q=80" alt="Camisetas" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon/70 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-5">
+          <h3 class="text-white font-display text-xl font-semibold">Camisetas</h3>
+          <p class="text-white/70 text-xs mt-1 tracking-wide">Algodón orgánico</p>
+        </div>
+      </a>
+      <!-- Cat 2 -->
+      <a href="#coleccion" onclick="setCategoryFilter('Chaquetas')" class="group relative aspect-[3/4] overflow-hidden rounded-sm cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80" alt="Chaquetas" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon/70 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-5">
+          <h3 class="text-white font-display text-xl font-semibold">Chaquetas</h3>
+          <p class="text-white/70 text-xs mt-1 tracking-wide">Pana & lino</p>
+        </div>
+      </a>
+      <!-- Cat 3 -->
+      <a href="#coleccion" onclick="setCategoryFilter('Pantalones')" class="group relative aspect-[3/4] overflow-hidden rounded-sm cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon/70 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-5">
+          <h3 class="text-white font-display text-xl font-semibold">Pantalones</h3>
+          <p class="text-white/70 text-xs mt-1 tracking-wide">Cortes relajados</p>
+        </div>
+      </a>
+      <!-- Cat 4 -->
+      <a href="#coleccion" onclick="setCategoryFilter('Accesorios')" class="group relative aspect-[3/4] overflow-hidden rounded-sm cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=600&q=80" alt="Accesorios" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon/70 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-5">
+          <h3 class="text-white font-display text-xl font-semibold">Accesorios</h3>
+          <p class="text-white/70 text-xs mt-1 tracking-wide">Detalles esenciales</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ PRODUCTOS DESTACADOS (DESDE MONGODB) ═══════════════ -->
+  <section id="coleccion" class="bg-white py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <p class="text-humo text-xs tracking-[0.3em] uppercase">Catálogo en vivo</p>
+            <span class="w-2 h-2 rounded-full bg-oliva animate-pulse"></span>
+            <span class="text-[10px] bg-oliva/10 text-oliva px-2 py-0.5 rounded font-mono">MongoDB</span>
+          </div>
+          <h2 class="text-3xl lg:text-4xl font-display font-semibold">Nuestra Colección</h2>
+        </div>
+
+        <!-- Filtros por género -->
+        <div class="flex flex-wrap gap-2">
+          <button class="filter-btn active px-4 py-2 text-xs tracking-wider uppercase border border-carbon bg-carbon text-white transition-all duration-300" data-filter="todos">Todos</button>
+          <button class="filter-btn px-4 py-2 text-xs tracking-wider uppercase border border-carbon/20 text-humo hover:border-carbon hover:text-carbon transition-all duration-300" data-filter="hombre">Hombre</button>
+          <button class="filter-btn px-4 py-2 text-xs tracking-wider uppercase border border-carbon/20 text-humo hover:border-carbon hover:text-carbon transition-all duration-300" data-filter="mujer">Mujer</button>
+          <button class="filter-btn px-4 py-2 text-xs tracking-wider uppercase border border-carbon/20 text-humo hover:border-carbon hover:text-carbon transition-all duration-300" data-filter="unisex">Unisex</button>
+        </div>
+      </div>
+
+      <!-- Buscador en tiempo real -->
+      <div class="mb-10 max-w-md">
+        <div class="relative">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Buscar por nombre o prenda..."
+            class="w-full bg-crema/40 border border-carbon/15 px-4 py-2.5 pl-10 text-xs sm:text-sm focus:outline-none focus:border-carbon transition-colors"
+          >
+          <svg class="w-4 h-4 text-humo absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+      </div>
+
+      <!-- Grid dinámico de productos -->
+      <div id="productos-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
+        <!-- Renderizado dinámico desde script.js -->
+        <div class="col-span-full py-16 text-center text-humo">
+          <div class="inline-block w-8 h-8 border-2 border-carbon/20 border-t-carbon rounded-full animate-spin mb-3"></div>
+          <p class="text-sm">Cargando productos de MongoDB...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ BANNER INTERMEDIO ═══════════════ -->
+  <section class="relative h-[60vh] lg:h-[70vh] overflow-hidden">
+    <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=80" alt="Lookbook" class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-carbon/50 flex items-center justify-center">
+      <div class="text-center px-6">
+        <p class="text-arena/70 text-xs tracking-[0.4em] uppercase mb-4">Lookbook</p>
+        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white mb-6">
+          Menos es <span class="italic">siempre</span> más
+        </h2>
+        <p class="text-arena/60 max-w-md mx-auto mb-8 text-sm leading-relaxed">
+          Cada pieza fue diseñada para combinarse sin esfuerzo. Mezclá, jugá, hacelo tuyo.
+        </p>
+        <a href="#coleccion" class="inline-block bg-white text-carbon px-8 py-3.5 text-sm font-semibold tracking-wider uppercase hover:bg-terracota hover:text-white transition-all duration-300">
+          Explorar prendas
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ NUEVOS INGRESOS ═══════════════ -->
+  <section id="nuevos" class="py-20 lg:py-28 px-6 lg:px-10 max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-14">
+      <div>
+        <p class="text-humo text-xs tracking-[0.3em] uppercase mb-2">Recién llegados</p>
+        <h2 class="text-3xl lg:text-4xl font-display font-semibold">Nuevos ingresos</h2>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <a href="#coleccion" class="group relative aspect-[4/5] overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=800&q=80" alt="Colección cápsula" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon/70 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-8">
+          <p class="text-white/50 text-[10px] tracking-[0.3em] uppercase mb-2">Colección cápsula</p>
+          <h3 class="text-white font-display text-2xl lg:text-3xl font-semibold mb-2">Esenciales de<br>media estación</h3>
+          <span class="text-white/70 text-xs underline underline-offset-4 group-hover:text-terracota transition-colors">Descubrir →</span>
+        </div>
+      </a>
+
+      <div class="grid grid-rows-2 gap-6">
+        <a href="#coleccion" class="group relative overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1434389677669-e08b4cda3394?w=800&q=80" alt="Tejidos naturales" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-carbon/60 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6">
+            <p class="text-white/50 text-[10px] tracking-[0.3em] uppercase mb-1">Materiales</p>
+            <h3 class="text-white font-display text-xl font-semibold">Tejidos naturales</h3>
+          </div>
+        </a>
+        <a href="#coleccion" class="group relative overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1467043237213-65f2da53396f?w=800&q=80" alt="Colores de tierra" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-carbon/60 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6">
+            <p class="text-white/50 text-[10px] tracking-[0.3em] uppercase mb-1">Paleta</p>
+            <h3 class="text-white font-display text-xl font-semibold">Colores de tierra</h3>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ NOSOTROS ═══════════════ -->
+  <section id="nosotros" class="bg-carbon text-arena">
+    <div class="grid grid-cols-1 lg:grid-cols-2">
+      <div class="flex items-center px-6 lg:px-16 py-20 lg:py-28">
+        <div class="max-w-lg">
+          <p class="text-arena/40 text-xs tracking-[0.3em] uppercase mb-4">Nuestra filosofía</p>
+          <h2 class="text-3xl lg:text-5xl font-display font-bold leading-tight mb-8">
+            No seguimos<br>tendencias,<br>
+            <span class="italic text-terracota">las ignoramos.</span>
+          </h2>
+          <p class="text-arena/60 leading-relaxed mb-6">
+            NØMAD nació con una idea simple: hacer ropa honesta que dure más de una temporada. Integramos una arquitectura moderna de bases de datos políglota para gestionar inventarios flexibles y transacciones comerciales robustas.
+          </p>
+          <p class="text-arena/60 leading-relaxed mb-10">
+            Cada prenda pasa por manos apasionadas. Sin fast fashion, con trazabilidad completa.
+          </p>
+
+          <div class="grid grid-cols-3 gap-6">
+            <div>
+              <p class="text-3xl font-display font-bold text-white">97%</p>
+              <p class="text-arena/40 text-xs mt-1 tracking-wide">Materiales nobles</p>
+            </div>
+            <div>
+              <p class="text-3xl font-display font-bold text-white">2 BDs</p>
+              <p class="text-arena/40 text-xs mt-1 tracking-wide">SQL & NoSQL</p>
+            </div>
+            <div>
+              <p class="text-3xl font-display font-bold text-white">100%</p>
+              <p class="text-arena/40 text-xs mt-1 tracking-wide">Transparente</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="relative min-h-[400px] lg:min-h-0">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80" alt="Taller NØMAD" class="w-full h-full object-cover">
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ RESEÑAS DINÁMICAS (MONGODB) ═══════════════ -->
+  <section id="comunidad" class="py-20 lg:py-28 px-6 lg:px-10 max-w-6xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-14 text-center sm:text-left">
+      <div>
+        <div class="flex items-center justify-center sm:justify-start gap-2 mb-2">
+          <p class="text-humo text-xs tracking-[0.3em] uppercase">Opiniones reales</p>
+          <span class="text-[10px] bg-oliva/10 text-oliva px-2 py-0.5 rounded font-mono">MongoDB</span>
+        </div>
+        <h2 class="text-3xl lg:text-4xl font-display font-semibold">Lo que dice la comunidad</h2>
+      </div>
+      <button onclick="openReviewModal()" class="bg-carbon text-white text-xs uppercase tracking-wider font-semibold px-6 py-3 hover:bg-terracota transition-colors shrink-0">
+        + Escribir reseña
+      </button>
+    </div>
+
+    <!-- Contenedor dinámico de reseñas -->
+    <div id="resenas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="col-span-full py-10 text-center text-humo text-sm">Cargando reseñas...</div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ NEWSLETTER ═══════════════ -->
+  <section id="contacto" class="bg-arena/60 py-20 lg:py-28">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <p class="text-humo text-xs tracking-[0.3em] uppercase mb-2">Comunidad NØMAD</p>
+      <h2 class="text-3xl lg:text-4xl font-display font-semibold mb-4">Sé el primero en saber</h2>
+      <p class="text-humo text-sm leading-relaxed mb-10 max-w-md mx-auto">
+        Recibí lanzamientos exclusivos y un 10% de descuento en tu primer pedido registrado en el sistema.
+      </p>
+      <form class="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto" onsubmit="handleNewsletter(event)">
+        <input
+          type="email"
+          placeholder="tu@email.com"
+          required
+          class="flex-1 px-5 py-3.5 bg-white border border-carbon/10 text-sm placeholder:text-humo/50 focus:outline-none focus:border-carbon transition-colors"
+        >
+        <button type="submit" class="bg-carbon text-white px-8 py-3.5 text-sm font-semibold tracking-wider uppercase hover:bg-terracota transition-colors duration-300 shrink-0">
+          Suscribirse
+        </button>
+      </form>
+      <p class="text-humo/50 text-[11px] mt-4">Sin spam. Podés cancelar en cualquier momento.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="bg-carbon text-arena/60 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
+        <div class="col-span-2 md:col-span-1">
+          <a href="#" class="text-2xl font-display font-bold text-white tracking-wider">NØMAD</a>
+          <p class="text-sm leading-relaxed mt-4 max-w-xs">
+            Tienda de ropa con sistema políglota (MongoDB & SQL Server). Sin frameworks, 100% Tailwind CSS.
+          </p>
+          <div class="mt-4">
+            <a href="admin.html" class="inline-flex items-center gap-2 text-xs text-arena hover:text-white underline underline-offset-4">
+              ⚙ Abrir Panel Administrativo CRUD →
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-white text-xs font-semibold tracking-[0.2em] uppercase mb-5">Categorías</h4>
+          <ul class="space-y-3 text-sm">
+            <li><a href="#coleccion" onclick="setCategoryFilter('Camisetas')" class="hover:text-white transition-colors">Camisetas</a></li>
+            <li><a href="#coleccion" onclick="setCategoryFilter('Chaquetas')" class="hover:text-white transition-colors">Chaquetas</a></li>
+            <li><a href="#coleccion" onclick="setCategoryFilter('Pantalones')" class="hover:text-white transition-colors">Pantalones</a></li>
+            <li><a href="#coleccion" onclick="setCategoryFilter('Accesorios')" class="hover:text-white transition-colors">Accesorios</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white text-xs font-semibold tracking-[0.2em] uppercase mb-5">Arquitectura</h4>
+          <ul class="space-y-3 text-sm">
+            <li><span class="text-white/80">MongoDB:</span> Catálogo & Reseñas</li>
+            <li><span class="text-white/80">SQL Server:</span> Usuarios & Pedidos</li>
+            <li><span class="text-white/80">Tailwind CSS:</span> Diseño Responsivo</li>
+            <li><a href="admin.html" class="hover:text-white transition-colors">Panel CRUD</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white text-xs font-semibold tracking-[0.2em] uppercase mb-5">Ayuda</h4>
+          <ul class="space-y-3 text-sm">
+            <li><a href="#" class="hover:text-white transition-colors">Envíos y entregas</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Devoluciones</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Guía de tallas</a></li>
+            <li><a href="#contacto" class="hover:text-white transition-colors">Contacto</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-arena/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-arena/40">&copy; 2026 NØMAD. Todos los derechos reservados.</p>
+        <div class="flex gap-6 text-xs text-arena/40">
+          <a href="admin.html" class="hover:text-white transition-colors">Admin CRUD</a>
+          <a href="#" class="hover:text-white transition-colors">Privacidad</a>
+          <a href="#" class="hover:text-white transition-colors">Términos</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════ SLIDE-OVER: CARRITO DE COMPRAS ═══════════════ -->
+  <div id="cart-drawer-overlay" class="fixed inset-0 bg-carbon/50 z-50 transition-opacity opacity-0 pointer-events-none" onclick="toggleCartDrawer(false)"></div>
+  <aside id="cart-drawer" class="cart-drawer fixed top-0 right-0 h-full w-full max-w-md bg-crema z-50 shadow-2xl flex flex-col">
+    <!-- Header -->
+    <div class="p-6 border-b border-carbon/10 flex items-center justify-between bg-white">
+      <div class="flex items-center gap-2">
+        <h3 class="font-display font-semibold text-lg">Tu Carrito</h3>
+        <span id="cart-drawer-count" class="text-xs bg-carbon/5 text-humo px-2 py-0.5 rounded-full font-medium">0 items</span>
+      </div>
+      <button onclick="toggleCartDrawer(false)" class="p-2 text-humo hover:text-carbon rounded-lg hover:bg-carbon/5 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Items list -->
+    <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+      <!-- Se insertan dinámicamente -->
+    </div>
+
+    <!-- Checkout / Formulario de Pedido (SQL Server) -->
+    <div class="p-6 bg-white border-t border-carbon/10 space-y-4">
+      <div class="flex justify-between items-center text-sm">
+        <span class="text-humo">Subtotal</span>
+        <span id="cart-subtotal" class="font-bold text-base">$0</span>
+      </div>
+
+      <div id="checkout-box" class="space-y-3 pt-2">
+        <p class="text-xs font-semibold text-humo uppercase tracking-wider">Datos para finalizar pedido (SQL Server)</p>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <input id="checkout-nombre" type="text" placeholder="Tu nombre" class="w-full px-3 py-2 bg-crema/40 border border-carbon/15 rounded focus:outline-none focus:border-carbon">
+          <input id="checkout-ciudad" type="text" placeholder="Ciudad (ej: Bogotá)" value="Bogotá" class="w-full px-3 py-2 bg-crema/40 border border-carbon/15 rounded focus:outline-none focus:border-carbon">
+        </div>
+        <input id="checkout-direccion" type="text" placeholder="Dirección de envío (ej: Calle 45 #12-30)" class="w-full text-xs px-3 py-2 bg-crema/40 border border-carbon/15 rounded focus:outline-none focus:border-carbon">
+        <select id="checkout-metodo" class="w-full text-xs px-3 py-2 bg-crema/40 border border-carbon/15 rounded focus:outline-none focus:border-carbon">
+          <option value="tarjeta">Pago con Tarjeta</option>
+          <option value="transferencia">Transferencia Bancaria</option>
+          <option value="contraentrega">Pago Contraentrega</option>
+        </select>
+      </div>
+
+      <button id="btn-finalizar-pedido" onclick="realizarPedido()" class="w-full bg-carbon text-white py-3.5 text-xs font-semibold uppercase tracking-wider hover:bg-terracota transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed">
+        Finalizar Pedido →
+      </button>
+    </div>
+  </aside>
+
+
+  <!-- ═══════════════ MODAL: DEJAR RESEÑA (MONGODB) ═══════════════ -->
+  <div id="review-modal" class="modal-backdrop fixed inset-0 bg-carbon/50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-scale">
+      <div class="p-6 border-b border-carbon/10 flex items-center justify-between">
+        <h3 class="font-display font-semibold text-lg">Escribir una reseña</h3>
+        <button onclick="closeReviewModal()" class="p-1 text-humo hover:text-carbon rounded-lg hover:bg-carbon/5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="submitReview(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-medium text-humo uppercase tracking-wider mb-1.5">Producto *</label>
+          <select id="review-product-select" class="w-full px-3 py-2.5 bg-crema/40 border border-carbon/15 rounded-lg focus:outline-none focus:border-carbon text-sm" required>
+            <option value="">Selecciona una prenda...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-humo uppercase tracking-wider mb-1.5">Calificación *</label>
+          <div class="flex gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="modal_calificacion" value="5" class="hidden peer" checked>
+              <span class="block px-3 py-1.5 rounded-lg border border-carbon/20 peer-checked:bg-terracota peer-checked:text-white font-semibold text-xs">★★★★★ 5</span>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="modal_calificacion" value="4" class="hidden peer">
+              <span class="block px-3 py-1.5 rounded-lg border border-carbon/20 peer-checked:bg-terracota peer-checked:text-white font-semibold text-xs">★★★★ 4</span>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="modal_calificacion" value="3" class="hidden peer">
+              <span class="block px-3 py-1.5 rounded-lg border border-carbon/20 peer-checked:bg-terracota peer-checked:text-white font-semibold text-xs">★★★ 3</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-humo uppercase tracking-wider mb-1.5">Tu comentario *</label>
+          <textarea id="review-comment" rows="3" placeholder="¿Qué te pareció el material, el calce o los acabados?" required class="w-full px-3 py-2 bg-crema/40 border border-carbon/15 rounded-lg focus:outline-none focus:border-carbon text-sm"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-carbon text-white py-3 rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-terracota transition-colors">
+          Publicar Reseña en MongoDB
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TOAST NOTIFICATIONS ═══════════════ -->
+  <div id="frontend-toast" class="fixed bottom-6 right-6 z-[60] pointer-events-none space-y-2"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

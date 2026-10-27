@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NØMAD — Panel de Administración</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            arena: '#e8e0d4',
+            crema: '#f5f0e8',
+            carbon: '#1a1a1a',
+            humo: '#6b6560',
+            terracota: '#c4653a',
+            oliva: '#5c6b4f',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'Georgia', 'serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    ::selection { background-color: #c4653a; color: #fff; }
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+    .sidebar-link.active { background-color: #1a1a1a; color: #fff; }
+    .modal-overlay { display: none; }
+    .modal-overlay.show { display: flex; }
+    .toast { animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    table tbody tr { transition: background-color 0.15s; }
+  </style>
+</head>
+<body class="bg-crema text-carbon font-body antialiased">
+
+  <!-- ═══════ LAYOUT ═══════ -->
+  <div class="flex min-h-screen">
+
+    <!-- ─── SIDEBAR ─── -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-carbon/10 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+      <!-- Logo -->
+      <div class="p-6 border-b border-carbon/10">
+        <a href="index.html" class="text-2xl font-display font-bold tracking-wider">NØMAD</a>
+        <p class="text-humo text-[11px] tracking-widest uppercase mt-1">Panel Admin</p>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 p-4 space-y-1">
+        <p class="text-[10px] text-humo tracking-[0.2em] uppercase font-semibold mb-3 px-3">MongoDB</p>
+        <button onclick="showSection('productos')" class="sidebar-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-carbon/5" data-section="productos">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Productos
+        </button>
+        <button onclick="showSection('resenas')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-carbon/5" data-section="resenas">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Reseñas
+        </button>
+
+        <p class="text-[10px] text-humo tracking-[0.2em] uppercase font-semibold mb-3 mt-6 px-3">SQL Server</p>
+        <button onclick="showSection('usuarios')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-carbon/5" data-section="usuarios">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Usuarios
+        </button>
+        <button onclick="showSection('categorias')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-carbon/5" data-section="categorias">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Categorías
+        </button>
+        <button onclick="showSection('pedidos')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-carbon/5" data-section="pedidos">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Pedidos
+        </button>
+      </nav>
+
+      <!-- Footer sidebar -->
+      <div class="p-4 border-t border-carbon/10">
+        <a href="index.html" class="flex items-center gap-2 text-xs text-humo hover:text-terracota transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          Volver a la tienda
+        </a>
+      </div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="flex-1 min-w-0">
+      <!-- Top bar -->
+      <header class="sticky top-0 z-30 bg-crema/90 backdrop-blur-md border-b border-carbon/10 px-6 py-4 flex items-center justify-between">
+        <button id="sidebar-toggle" class="lg:hidden p-2 -ml-2 hover:bg-carbon/5 rounded-lg" onclick="toggleSidebar()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 id="page-title" class="text-lg font-display font-semibold">Productos</h1>
+        <div class="flex items-center gap-3">
+          <span class="hidden sm:inline text-xs text-humo">Administrador</span>
+          <div class="w-8 h-8 bg-carbon text-white rounded-full flex items-center justify-center text-xs font-bold">A</div>
+        </div>
+      </header>
+
+      <div class="p-6 lg:p-8 max-w-6xl">
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- PRODUCTOS (MongoDB)                -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="sec-productos" class="section-panel active">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p class="text-humo text-sm">Gestión del catálogo de productos <span class="text-[10px] bg-oliva/10 text-oliva px-2 py-0.5 rounded-full ml-1 font-medium">MongoDB</span></p>
+            <button onclick="openModal('producto')" class="bg-carbon text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-terracota transition-colors flex items-center gap-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo producto
+            </button>
+          </div>
+          <div class="bg-white rounded-xl border border-carbon/10 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-carbon/[0.03] text-left text-xs text-humo uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">Producto</th>
+                    <th class="px-5 py-3 font-medium">Categoría</th>
+                    <th class="px-5 py-3 font-medium">Género</th>
+                    <th class="px-5 py-3 font-medium">Precio</th>
+                    <th class="px-5 py-3 font-medium">Stock</th>
+                    <th class="px-5 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-productos" class="divide-y divide-carbon/5">
+                  <tr><td colspan="6" class="px-5 py-10 text-center text-humo">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- RESEÑAS (MongoDB)                  -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="sec-resenas" class="section-panel">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p class="text-humo text-sm">Reseñas de clientes <span class="text-[10px] bg-oliva/10 text-oliva px-2 py-0.5 rounded-full ml-1 font-medium">MongoDB</span></p>
+            <button onclick="openModal('resena')" class="bg-carbon text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-terracota transition-colors flex items-center gap-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nueva reseña
+            </button>
+          </div>
+          <div class="bg-white rounded-xl border border-carbon/10 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-carbon/[0.03] text-left text-xs text-humo uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">ID Usuario (SQL)</th>
+                    <th class="px-5 py-3 font-medium">Producto</th>
+                    <th class="px-5 py-3 font-medium">Calificación</th>
+                    <th class="px-5 py-3 font-medium">Comentario</th>
+                    <th class="px-5 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-resenas" class="divide-y divide-carbon/5">
+                  <tr><td colspan="5" class="px-5 py-10 text-center text-humo">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- USUARIOS (SQL Server)              -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="sec-usuarios" class="section-panel">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p class="text-humo text-sm">Clientes registrados <span class="text-[10px] bg-terracota/10 text-terracota px-2 py-0.5 rounded-full ml-1 font-medium">SQL Server</span></p>
+            <button onclick="openModal('usuario')" class="bg-carbon text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-terracota transition-colors flex items-center gap-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo usuario
+            </button>
+          </div>
+          <div class="bg-white rounded-xl border border-carbon/10 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-carbon/[0.03] text-left text-xs text-humo uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">ID</th>
+                    <th class="px-5 py-3 font-medium">Nombre</th>
+                    <th class="px-5 py-3 font-medium">Email</th>
+                    <th class="px-5 py-3 font-medium">Ciudad</th>
+                    <th class="px-5 py-3 font-medium">Rol</th>
+                    <th class="px-5 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-usuarios" class="divide-y divide-carbon/5">
+                  <tr><td colspan="6" class="px-5 py-10 text-center text-humo">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- CATEGORÍAS (SQL Server)            -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="sec-categorias" class="section-panel">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p class="text-humo text-sm">Categorías de productos <span class="text-[10px] bg-terracota/10 text-terracota px-2 py-0.5 rounded-full ml-1 font-medium">SQL Server</span></p>
+            <button onclick="openModal('categoria')" class="bg-carbon text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-terracota transition-colors flex items-center gap-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nueva categoría
+            </button>
+          </div>
+          <div class="bg-white rounded-xl border border-carbon/10 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-carbon/[0.03] text-left text-xs text-humo uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">ID</th>
+                    <th class="px-5 py-3 font-medium">Nombre</th>
+                    <th class="px-5 py-3 font-medium">Descripción</th>
+                    <th class="px-5 py-3 font-medium">Estado</th>
+                    <th class="px-5 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-categorias" class="divide-y divide-carbon/5">
+                  <tr><td colspan="5" class="px-5 py-10 text-center text-humo">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- PEDIDOS (SQL Server)               -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="sec-pedidos" class="section-panel">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p class="text-humo text-sm">Órdenes de compra <span class="text-[10px] bg-terracota/10 text-terracota px-2 py-0.5 rounded-full ml-1 font-medium">SQL Server</span></p>
+            <button onclick="openModal('pedido')" class="bg-carbon text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-terracota transition-colors flex items-center gap-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo pedido
+            </button>
+          </div>
+          <div class="bg-white rounded-xl border border-carbon/10 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-carbon/[0.03] text-left text-xs text-humo uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">ID</th>
+                    <th class="px-5 py-3 font-medium">Cliente</th>
+                    <th class="px-5 py-3 font-medium">Total</th>
+                    <th class="px-5 py-3 font-medium">Estado</th>
+                    <th class="px-5 py-3 font-medium">Fecha</th>
+                    <th class="px-5 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-pedidos" class="divide-y divide-carbon/5">
+                  <tr><td colspan="6" class="px-5 py-10 text-center text-humo">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Overlay for mobile sidebar -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-carbon/40 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- MODAL GENÉRICO                     -->
+  <!-- ═══════════════════════════════════ -->
+  <div id="modal-overlay" class="modal-overlay fixed inset-0 bg-carbon/50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-carbon/10">
+        <h2 id="modal-title" class="font-display font-semibold text-lg">Título</h2>
+        <button onclick="closeModal()" class="p-1 hover:bg-carbon/5 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="modal-body" class="p-6">
+        <!-- Formulario dinámico -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- TOAST NOTIFICATIONS                -->
+  <!-- ═══════════════════════════════════ -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[60] space-y-2"></div>
+
+
+  <script>
+  // ═══════════════════════════════════════════════════════════
+  // NØMAD Admin — JavaScript
+  // ═══════════════════════════════════════════════════════════
+
+  const API = '';  // mismo origin
+
+  // ─── SIDEBAR ───
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+  }
+
+  // ─── SECTION NAVIGATION ───
+  function showSection(name) {
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+
+    document.getElementById('sec-' + name).classList.add('active');
+    document.querySelector(`[data-section="${name}"]`).classList.add('active');
+
+    const titles = { productos: 'Productos', resenas: 'Reseñas', usuarios: 'Usuarios', categorias: 'Categorías', pedidos: 'Pedidos' };
+    document.getElementById('page-title').textContent = titles[name];
+
+    // Close mobile sidebar
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+      toggleSidebar();
+    }
+
+    // Load data
+    loaders[name]();
+  }
+
+  // ─── TOAST ───
+  function toast(msg, type = 'success') {
+    const colors = { success: 'bg-oliva', error: 'bg-red-500', info: 'bg-carbon' };
+    const el = document.createElement('div');
+    el.className = `toast ${colors[type]} text-white text-sm px-5 py-3 rounded-lg shadow-lg`;
+    el.textContent = msg;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  // ─── MODAL ───
+  let currentEditId = null;
+  let currentEditType = null;
+
+  function openModal(type, editData = null) {
+    currentEditType = type;
+    currentEditId = editData ? (editData._id || editData.id_usuario || editData.id_categoria || editData.id_pedido) : null;
+
+    const title = editData ? 'Editar' : 'Crear';
+    const labels = { producto: 'Producto', resena: 'Reseña', usuario: 'Usuario', categoria: 'Categoría', pedido: 'Pedido' };
+    document.getElementById('modal-title').textContent = `${title} ${labels[type]}`;
+    document.getElementById('modal-body').innerHTML = getForm(type, editData);
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+    currentEditId = null;
+    currentEditType = null;
+  }
+
+  // Close modal on overlay click
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ─── FORM TEMPLATES ───
+  function getForm(type, d) {
+    const inputClass = 'w-full px-4 py-2.5 border border-carbon/15 rounded-lg text-sm focus:outline-none focus:border-carbon focus:ring-1 focus:ring-carbon/20 transition-colors bg-crema/30';
+    const labelClass = 'block text-xs font-medium text-humo uppercase tracking-wider mb-1.5';
+    const btnClass = 'w-full bg-carbon text-white font-medium py-3 rounded-lg hover:bg-terracota transition-colors text-sm tracking-wide';
+
+    switch(type) {
+      case 'producto':
+        return `
+          <form onsubmit="saveProducto(event)" class="space-y-4">
+            <div>
+              <label class="${labelClass}">Nombre *</label>
+              <input name="nombre" class="${inputClass}" required value="${d?.nombre || ''}">
+            </div>
+            <div>
+              <label class="${labelClass}">Descripción</label>
+              <textarea name="descripcion" class="${inputClass}" rows="2">${d?.descripcion || ''}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="${labelClass}">Precio *</label>
+                <input name="precio" type="number" class="${inputClass}" required value="${d?.precio || ''}">
+              </div>
+              <div>
+                <label class="${labelClass}">Precio descuento</label>
+                <input name="precio_descuento" type="number" class="${inputClass}" value="${d?.precio_descuento || ''}">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="${labelClass}">Categoría *</label>
+                <select name="categoria" class="${inputClass}" required>
+                  <option value="Camisetas" ${d?.categoria === 'Camisetas' ? 'selected' : ''}>Camisetas</option>
+                  <option value="Chaquetas" ${d?.categoria === 'Chaquetas' ? 'selected' : ''}>Chaquetas</option>
+                  <option value="Pantalones" ${d?.categoria === 'Pantalones' ? 'selected' : ''}>Pantalones</option>
+                  <option value="Accesorios" ${d?.categoria === 'Accesorios' ? 'selected' : ''}>Accesorios</option>
+                </select>
+              </div>
+              <div>
+                <label class="${labelClass}">Género</label>
+                <select name="genero" class="${inputClass}">
+                  <option value="unisex" ${d?.genero === 'unisex' ? 'selected' : ''}>Unisex</option>
+                  <option value="hombre" ${d?.genero === 'hombre' ? 'selected' : ''}>Hombre</option>
+                  <option value="mujer" ${d?.genero === 'mujer' ? 'selected' : ''}>Mujer</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="${labelClass}">Tallas (separadas por coma)</label>
+                <input name="tallas" class="${inputClass}" placeholder="S, M, L, XL" value="${d?.tallas?.join(', ') || ''}">
+              </div>
+              <div>
+                <label class="${labelClass}">Stock *</label>
+                <input name="stock" type="number" class="${inputClass}" required value="${d?.stock ?? 0}">
+              </div>
+            </div>
+            <div>
+              <label class="${labelClass}">URL Imagen</label>
+              <input name="imagenes" class="${inputClass}" placeholder="https://..." value="${d?.imagenes?.[0] || ''}">
+            </div>
+            <div>
+              <label class="${labelClass}">Etiquetas (separadas por coma)</label>
+              <input name="etiquetas" class="${inputClass}" placeholder="nuevo, algodón, básico" value="${d?.etiquetas?.join(', ') || ''}">
+            </div>
+            <button type="submit" class="${btnClass}">${d ? 'Guardar cambios' : 'Crear producto'}</button>
+          </form>`;
+
+      case 'resena':
+        return `
+          <form onsubmit="saveResena(event)" class="space-y-4">
+            <div>
+              <label class="${labelClass}">ID Producto (MongoDB) *</label>
+              <select name="producto_id" class="${inputClass}" required id="select-producto-resena">
+                <option value="">Cargando productos...</option>
+              </select>
+            </div>
+            <div>
+              <label class="${labelClass}">ID Usuario (SQL Server) *</label>
+              <input name="usuario_sql_id" type="number" class="${inputClass}" required value="${d?.usuario_sql_id || ''}" placeholder="Ej: 1">
+            </div>
+            <div>
+              <label class="${labelClass}">Calificación (1-5) *</label>
+              <div class="flex gap-2 mt-1">
+                ${[1,2,3,4,5].map(n => `
+                  <label class="cursor-pointer">
+                    <input type="radio" name="calificacion" value="${n}" class="hidden peer" ${d?.calificacion === n ? 'checked' : ''} required>
+                    <span class="block w-10 h-10 rounded-lg border-2 border-carbon/15 flex items-center justify-center text-sm font-semibold peer-checked:bg-terracota peer-checked:border-terracota peer-checked:text-white transition-all hover:border-terracota">
+                      ${n}
+                    </span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <label class="${labelClass}">Comentario</label>
+              <textarea name="comentario" class="${inputClass}" rows="3">${d?.comentario || ''}</textarea>
+            </div>
+            <button type="submit" class="${btnClass}">${d ? 'Guardar cambios' : 'Crear reseña'}</button>
+          </form>`;
+
+      case 'usuario':
+        return `
+          <form onsubmit="saveUsuario(event)" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="${labelClass}">Nombre *</label>
+                <input name="nombre" class="${inputClass}" required value="${d?.nombre || ''}">
+              </div>
+              <div>
+                <label class="${labelClass}">Apellido *</label>
+                <input name="apellido" class="${inputClass}" required value="${d?.apellido || ''}">
+              </div>
+            </div>
+            <div>
+              <label class="${labelClass}">Email *</label>
+              <input name="email" type="email" class="${inputClass}" required value="${d?.email || ''}">
+            </div>
+            ${!d ? `<div>
+              <label class="${labelClass}">Contraseña *</label>
+              <input name="contrasena" type="password" class="${inputClass}" required>
+            </div>` : ''}
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="${labelClass}">Teléfono</label>
+                <input name="telefono" class="${inputClass}" value="${d?.telefono || ''}">
+              </div>
+              <div>
+                <label class="${labelClass}">Ciudad</label>
+                <input name="ciudad" class="${inputClass}" value="${d?.ciudad || ''}">
+              </div>
+            </div>
+            <div>
+              <label class="${labelClass}">Dirección</label>
+              <input name="direccion" class="${inputClass}" value="${d?.direccion || ''}">
+            </div>
+            <button type="submit" class="${btnClass}">${d ? 'Guardar cambios' : 'Crear usuario'}</button>
+          </form>`;
+
+      case 'categoria':
+        return `
+          <form onsubmit="saveCategoria(event)" class="space-y-4">
+            <div>
+              <label class="${labelClass}">Nombre *</label>
+              <input name="nombre" class="${inputClass}" required value="${d?.nombre || ''}">
+            </div>
+            <div>
+              <label class="${labelClass}">Descripción</label>
+              <textarea name="descripcion" class="${inputClass}" rows="2">${d?.descripcion || ''}</textarea>
+            </div>
+            <button type="submit" class="${btnClass}">${d ? 'Guardar cambios' : 'Crear categoría'}</button>
+          </form>`;
+
+      case 'pedido':
+        return `
+          <form onsubmit="savePedido(event)" class="space-y-4">
+            ${d ? `
+              <div>
+                <label class="${labelClass}">Estado *</label>
+                <select name="estado" class="${inputClass}" required>
+                  <option value="pendiente" ${d.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="confirmado" ${d.estado === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                  <option value="enviado" ${d.estado === 'enviado' ? 'selected' : ''}>Enviado</option>
+                  <option value="entregado" ${d.estado === 'entregado' ? 'selected' : ''}>Entregado</option>
+                  <option value="cancelado" ${d.estado === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                </select>
+              </div>
+              <button type="submit" class="${btnClass}">Actualizar estado</button>
+            ` : `
+              <div>
+                <label class="${labelClass}">ID Usuario (SQL Server) *</label>
+                <input name="id_usuario" type="number" class="${inputClass}" required placeholder="Ej: 1">
+              </div>
+              <div>
+                <label class="${labelClass}">Dirección de envío *</label>
+                <input name="direccion_envio" class="${inputClass}" required>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="${labelClass}">Ciudad de envío *</label>
+                  <input name="ciudad_envio" class="${inputClass}" required>
+                </div>
+                <div>
+                  <label class="${labelClass}">Método de pago</label>
+                  <select name="metodo_pago" class="${inputClass}">
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="contraentrega">Contraentrega</option>
+                  </select>
+                </div>
+              </div>
+              <hr class="border-carbon/10">
+              <p class="text-xs text-humo font-semibold uppercase tracking-wider">Productos del pedido</p>
+              <div id="pedido-items">
+                <div class="item-row grid grid-cols-12 gap-2 items-end">
+                  <div class="col-span-5">
+                    <label class="${labelClass}">Producto</label>
+                    <select name="item_producto" class="${inputClass} select-producto-pedido">
+                      <option value="">Cargando...</option>
+                    </select>
+                  </div>
+                  <div class="col-span-2">
+                    <label class="${labelClass}">Talla</label>
+                    <input name="item_talla" class="${inputClass}" placeholder="M">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="${labelClass}">Cant.</label>
+                    <input name="item_cantidad" type="number" class="${inputClass}" value="1" min="1">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="${labelClass}">Precio</label>
+                    <input name="item_precio" type="number" class="${inputClass}" placeholder="0">
+                  </div>
+                  <div class="col-span-1">
+                    <button type="button" onclick="this.closest('.item-row').remove()" class="p-2 text-red-400 hover:text-red-600 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" onclick="addItemRow()" class="text-xs text-terracota hover:underline">+ Agregar otro producto</button>
+              <button type="submit" class="${btnClass}">Crear pedido</button>
+            `}
+          </form>`;
+    }
+  }
+
+  function addItemRow() {
+    const inputClass = 'w-full px-4 py-2.5 border border-carbon/15 rounded-lg text-sm focus:outline-none focus:border-carbon focus:ring-1 focus:ring-carbon/20 transition-colors bg-crema/30';
+    const container = document.getElementById('pedido-items');
+    const row = document.createElement('div');
+    row.className = 'item-row grid grid-cols-12 gap-2 items-end mt-2';
+    row.innerHTML = `
+      <div class="col-span-5">
+        <select name="item_producto" class="${inputClass} select-producto-pedido">
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div class="col-span-2">
+        <input name="item_talla" class="${inputClass}" placeholder="M">
+      </div>
+      <div class="col-span-2">
+        <input name="item_cantidad" type="number" class="${inputClass}" value="1" min="1">
+      </div>
+      <div class="col-span-2">
+        <input name="item_precio" type="number" class="${inputClass}" placeholder="0">
+      </div>
+      <div class="col-span-1">
+        <button type="button" onclick="this.closest('.item-row').remove()" class="p-2 text-red-400 hover:text-red-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    `;
+    container.appendChild(row);
+    loadProductosIntoSelects();
+  }
+
+
+  // ═══════════════════════════════════
+  // DATA LOADERS
+  // ═══════════════════════════════════
+
+  let productosCache = [];
+
+  const loaders = {
+    productos: loadProductos,
+    resenas: loadResenas,
+    usuarios: loadUsuarios,
+    categorias: loadCategorias,
+    pedidos: loadPedidos
+  };
+
+  async function loadProductos() {
+    try {
+      const res = await fetch(API + '/api/productos');
+      const json = await res.json();
+      productosCache = json.data || [];
+      const tbody = document.getElementById('tabla-productos');
+
+      if (productosCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-humo">No hay productos aún</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = productosCache.map(p => `
+        <tr class="hover:bg-crema/50">
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-3">
+              ${p.imagenes && p.imagenes[0] ? `<img src="${p.imagenes[0]}" class="w-10 h-10 object-cover rounded-lg bg-arena/40">` : '<div class="w-10 h-10 rounded-lg bg-arena/40"></div>'}
+              <div>
+                <p class="font-medium">${p.nombre}</p>
+                <p class="text-xs text-humo truncate max-w-[200px]">${p.descripcion || ''}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-5 py-3"><span class="text-xs bg-carbon/5 px-2 py-1 rounded">${p.categoria}</span></td>
+          <td class="px-5 py-3 capitalize">${p.genero || '-'}</td>
+          <td class="px-5 py-3 font-medium">$${p.precio?.toLocaleString()}</td>
+          <td class="px-5 py-3">${p.stock}</td>
+          <td class="px-5 py-3 text-right">
+            <div class="flex justify-end gap-1">
+              <button onclick='openModal("producto", ${JSON.stringify(p).replace(/'/g, "&#39;")})' class="p-2 hover:bg-carbon/5 rounded-lg transition-colors text-humo hover:text-carbon" title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteRecord('productos', '${p._id}')" class="p-2 hover:bg-red-50 rounded-lg transition-colors text-humo hover:text-red-500" title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('tabla-productos').innerHTML = `<tr><td colspan="6" class="px-5 py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadResenas() {
+    try {
+      const res = await fetch(API + '/api/resenas');
+      const json = await res.json();
+      const resenas = json.data || [];
+      const tbody = document.getElementById('tabla-resenas');
+
+      if (resenas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-10 text-center text-humo">No hay reseñas aún</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = resenas.map(r => {
+        const prod = productosCache.find(p => p._id === r.producto_id);
+        const stars = '★'.repeat(r.calificacion) + '☆'.repeat(5 - r.calificacion);
+        return `
+          <tr class="hover:bg-crema/50">
+            <td class="px-5 py-3 font-medium">${r.usuario_sql_id}</td>
+            <td class="px-5 py-3">${prod?.nombre || r.producto_id}</td>
+            <td class="px-5 py-3 text-terracota tracking-wider">${stars}</td>
+            <td class="px-5 py-3 text-humo truncate max-w-[250px]">${r.comentario || '-'}</td>
+            <td class="px-5 py-3 text-right">
+              <div class="flex justify-end gap-1">
+                <button onclick='openModal("resena", ${JSON.stringify(r).replace(/'/g, "&#39;")})' class="p-2 hover:bg-carbon/5 rounded-lg transition-colors text-humo hover:text-carbon" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onclick="deleteRecord('resenas', '${r._id}')" class="p-2 hover:bg-red-50 rounded-lg transition-colors text-humo hover:text-red-500" title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    } catch (e) {
+      document.getElementById('tabla-resenas').innerHTML = `<tr><td colspan="5" class="px-5 py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadUsuarios() {
+    try {
+      const res = await fetch(API + '/api/usuarios');
+      const json = await res.json();
+      const usuarios = json.data || [];
+      const tbody = document.getElementById('tabla-usuarios');
+
+      if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-humo">No hay usuarios aún</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = usuarios.map(u => `
+        <tr class="hover:bg-crema/50">
+          <td class="px-5 py-3 text-humo">${u.id_usuario}</td>
+          <td class="px-5 py-3 font-medium">${u.nombre} ${u.apellido}</td>
+          <td class="px-5 py-3">${u.email}</td>
+          <td class="px-5 py-3">${u.ciudad || '-'}</td>
+          <td class="px-5 py-3"><span class="text-xs px-2 py-1 rounded ${u.rol === 'admin' ? 'bg-terracota/10 text-terracota' : 'bg-carbon/5 text-humo'}">${u.rol}</span></td>
+          <td class="px-5 py-3 text-right">
+            <div class="flex justify-end gap-1">
+              <button onclick='openModal("usuario", ${JSON.stringify(u).replace(/'/g, "&#39;")})' class="p-2 hover:bg-carbon/5 rounded-lg transition-colors text-humo hover:text-carbon" title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteRecord('usuarios', ${u.id_usuario})" class="p-2 hover:bg-red-50 rounded-lg transition-colors text-humo hover:text-red-500" title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('tabla-usuarios').innerHTML = `<tr><td colspan="6" class="px-5 py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadCategorias() {
+    try {
+      const res = await fetch(API + '/api/categorias');
+      const json = await res.json();
+      const categorias = json.data || [];
+      const tbody = document.getElementById('tabla-categorias');
+
+      if (categorias.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-10 text-center text-humo">No hay categorías aún</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = categorias.map(c => `
+        <tr class="hover:bg-crema/50">
+          <td class="px-5 py-3 text-humo">${c.id_categoria}</td>
+          <td class="px-5 py-3 font-medium">${c.nombre}</td>
+          <td class="px-5 py-3 text-humo">${c.descripcion || '-'}</td>
+          <td class="px-5 py-3">
+            <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${c.activa ? 'bg-oliva/10 text-oliva' : 'bg-red-50 text-red-500'}">
+              <span class="w-1.5 h-1.5 rounded-full ${c.activa ? 'bg-oliva' : 'bg-red-400'}"></span>
+              ${c.activa ? 'Activa' : 'Inactiva'}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-right">
+            <div class="flex justify-end gap-1">
+              <button onclick='openModal("categoria", ${JSON.stringify(c).replace(/'/g, "&#39;")})' class="p-2 hover:bg-carbon/5 rounded-lg transition-colors text-humo hover:text-carbon" title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteRecord('categorias', ${c.id_categoria})" class="p-2 hover:bg-red-50 rounded-lg transition-colors text-humo hover:text-red-500" title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('tabla-categorias').innerHTML = `<tr><td colspan="5" class="px-5 py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadPedidos() {
+    try {
+      const res = await fetch(API + '/api/pedidos');
+      const json = await res.json();
+      const pedidos = json.data || [];
+      const tbody = document.getElementById('tabla-pedidos');
+
+      if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-humo">No hay pedidos aún</td></tr>';
+        return;
+      }
+
+      const estadoColors = {
+        pendiente: 'bg-yellow-50 text-yellow-700',
+        confirmado: 'bg-blue-50 text-blue-700',
+        enviado: 'bg-purple-50 text-purple-700',
+        entregado: 'bg-oliva/10 text-oliva',
+        cancelado: 'bg-red-50 text-red-500'
+      };
+
+      tbody.innerHTML = pedidos.map(p => `
+        <tr class="hover:bg-crema/50">
+          <td class="px-5 py-3 text-humo">#${p.id_pedido}</td>
+          <td class="px-5 py-3 font-medium">${p.nombre_cliente || 'ID: ' + p.id_usuario}</td>
+          <td class="px-5 py-3 font-medium">$${Number(p.total).toLocaleString()}</td>
+          <td class="px-5 py-3">
+            <span class="text-xs px-2 py-1 rounded capitalize ${estadoColors[p.estado] || 'bg-carbon/5 text-humo'}">${p.estado}</span>
+          </td>
+          <td class="px-5 py-3 text-humo text-xs">${new Date(p.fecha_pedido).toLocaleDateString('es-CO')}</td>
+          <td class="px-5 py-3 text-right">
+            <div class="flex justify-end gap-1">
+              <button onclick='openModal("pedido", ${JSON.stringify(p).replace(/'/g, "&#39;")})' class="p-2 hover:bg-carbon/5 rounded-lg transition-colors text-humo hover:text-carbon" title="Cambiar estado">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteRecord('pedidos', ${p.id_pedido})" class="p-2 hover:bg-red-50 rounded-lg transition-colors text-humo hover:text-red-500" title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('tabla-pedidos').innerHTML = `<tr><td colspan="6" class="px-5 py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  // Load products into select dropdowns (for resenas and pedidos forms)
+  async function loadProductosIntoSelects() {
+    if (productosCache.length === 0) {
+      try {
+        const res = await fetch(API + '/api/productos');
+        const json = await res.json();
+        productosCache = json.data || [];
+      } catch(e) { /* silently fail */ }
+    }
+    const options = productosCache.map(p => `<option value="${p._id}">${p.nombre} - $${p.precio?.toLocaleString()}</option>`).join('');
+
+    document.querySelectorAll('#select-producto-resena').forEach(sel => {
+      sel.innerHTML = '<option value="">Seleccionar producto...</option>' + options;
+    });
+    document.querySelectorAll('.select-producto-pedido').forEach(sel => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Seleccionar producto...</option>' + options;
+      if (current) sel.value = current;
+    });
+  }
+
+
+  // ═══════════════════════════════════
+  // SAVE HANDLERS
+  // ═══════════════════════════════════
+
+  function getFormData(form) {
+    const fd = new FormData(form);
+    const obj = {};
+    fd.forEach((v, k) => { if (v !== '') obj[k] = v; });
+    return obj;
+  }
+
+  async function saveProducto(e) {
+    e.preventDefault();
+    const d = getFormData(e.target);
+    d.precio = Number(d.precio);
+    if (d.precio_descuento) d.precio_descuento = Number(d.precio_descuento);
+    d.stock = Number(d.stock || 0);
+    if (d.tallas) d.tallas = d.tallas.split(',').map(t => t.trim()).filter(Boolean);
+    if (d.imagenes) d.imagenes = [d.imagenes];
+    if (d.etiquetas) d.etiquetas = d.etiquetas.split(',').map(t => t.trim()).filter(Boolean);
+
+    try {
+      const url = currentEditId ? `/api/productos/${currentEditId}` : '/api/productos';
+      const method = currentEditId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      closeModal();
+      loadProductos();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function saveResena(e) {
+    e.preventDefault();
+    await loadProductosIntoSelects();
+    const d = getFormData(e.target);
+    d.usuario_sql_id = Number(d.usuario_sql_id);
+    d.calificacion = Number(d.calificacion);
+
+    try {
+      const url = currentEditId ? `/api/resenas/${currentEditId}` : '/api/resenas';
+      const method = currentEditId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      closeModal();
+      loadResenas();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function saveUsuario(e) {
+    e.preventDefault();
+    const d = getFormData(e.target);
+
+    try {
+      const url = currentEditId ? `/api/usuarios/${currentEditId}` : '/api/usuarios';
+      const method = currentEditId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      closeModal();
+      loadUsuarios();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function saveCategoria(e) {
+    e.preventDefault();
+    const d = getFormData(e.target);
+
+    try {
+      const url = currentEditId ? `/api/categorias/${currentEditId}` : '/api/categorias';
+      const method = currentEditId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      closeModal();
+      loadCategorias();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function savePedido(e) {
+    e.preventDefault();
+    const d = getFormData(e.target);
+
+    if (currentEditId) {
+      // Solo actualizar estado
+      try {
+        const res = await fetch(`/api/pedidos/${currentEditId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: d.estado })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || json.mensaje);
+        toast(json.mensaje);
+        closeModal();
+        loadPedidos();
+      } catch (err) { toast(err.message, 'error'); }
+      return;
+    }
+
+    // Crear pedido nuevo con items
+    const rows = document.querySelectorAll('#pedido-items .item-row');
+    const items = [];
+    let total = 0;
+
+    rows.forEach(row => {
+      const select = row.querySelector('[name="item_producto"]');
+      const prod = productosCache.find(p => p._id === select.value);
+      const cantidad = Number(row.querySelector('[name="item_cantidad"]').value) || 1;
+      const precio = Number(row.querySelector('[name="item_precio"]').value) || (prod?.precio || 0);
+      const talla = row.querySelector('[name="item_talla"]').value;
+
+      if (select.value) {
+        items.push({
+          producto_mongo_id: select.value,
+          nombre_producto: prod?.nombre || 'Producto',
+          talla: talla || null,
+          color: null,
+          cantidad,
+          precio_unitario: precio
+        });
+        total += cantidad * precio;
+      }
+    });
+
+    try {
+      const body = {
+        id_usuario: Number(d.id_usuario),
+        total,
+        direccion_envio: d.direccion_envio,
+        ciudad_envio: d.ciudad_envio,
+        metodo_pago: d.metodo_pago,
+        items
+      };
+      const res = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      closeModal();
+      loadPedidos();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+
+  // ═══════════════════════════════════
+  // DELETE
+  // ═══════════════════════════════════
+  async function deleteRecord(entity, id) {
+    if (!confirm('¿Estás seguro de que querés eliminar este registro?')) return;
+
+    try {
+      const res = await fetch(`/api/${entity}/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || json.mensaje);
+      toast(json.mensaje);
+      loaders[entity]();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+
+  // ═══════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProductos();
+  });
+
+  // When modal opens, load products into selects if needed
+  const origOpenModal = openModal;
+  openModal = function(type, editData) {
+    origOpenModal(type, editData);
+    if (type === 'resena' || type === 'pedido') {
+      setTimeout(loadProductosIntoSelects, 50);
+    }
+  };
+
+  </script>
+</body>
+</html>
+
